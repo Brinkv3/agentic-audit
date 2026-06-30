@@ -9,7 +9,7 @@ from src.models import (
     InterviewInputs,
     SourceType,
 )
-from src.utils import DEFAULT_MODEL, count_tokens, get_anthropic_client, guess_source_type, parse_file
+from src.utils import count_tokens, get_llm_client, guess_source_type, parse_file
 
 METADATA_SYSTEM_PROMPT = """You are an intake agent for a data audit workflow. Given an interview artifact, extract metadata.
 
@@ -51,7 +51,7 @@ def process_interview_inputs(
     interviewees: list[str] | None = None,
 ) -> tuple[InterviewInputs, AgentTrace]:
     start = time.time()
-    client = get_anthropic_client()
+    client = get_llm_client()
     total_tokens_used = 0
     llm_calls = 0
 
@@ -71,12 +71,7 @@ def process_interview_inputs(
         metadata = {}
         if not detected_app_name:
             preview = content[:3000]
-            response = client.messages.create(
-                model=DEFAULT_MODEL,
-                max_tokens=1024,
-                system=METADATA_SYSTEM_PROMPT,
-                tools=[METADATA_TOOL],
-                tool_choice={"type": "tool", "name": "submit_metadata"},
+            response = client.complete_with_tools(
                 messages=[
                     {
                         "role": "user",
@@ -87,12 +82,14 @@ def process_interview_inputs(
                         ),
                     }
                 ],
+                tools=[METADATA_TOOL],
+                system=METADATA_SYSTEM_PROMPT,
+                max_tokens=1024,
+                tool_choice={"type": "tool", "name": "submit_metadata"},
             )
 
-            for block in response.content:
-                if block.type == "tool_use" and block.name == "submit_metadata":
-                    metadata = block.input
-                    break
+            if response.tool_calls:
+                metadata = response.tool_calls[0].arguments
 
             total_tokens_used += response.usage.input_tokens + response.usage.output_tokens
             llm_calls += 1

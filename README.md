@@ -27,7 +27,7 @@ Every answer is classified as **factual** (grounded in process, rule, or system 
 ## Key Design Decisions
 
 - **Questions are the organizing frame.** Everything maps back to the interview questions. The system answers each question as completely as possible — not free extraction.
-- **Claude native tool calling.** No framework dependency. Each agent uses structured tool definitions for typed output.
+- **Native LLM tool calling.** No framework dependency. Each agent uses structured tool definitions for typed output. Provider-agnostic via [llm-adapter](https://github.com/Brinkv3/llm-adapter).
 - **Pydantic models for inter-agent state.** Typed, validated, serializable contracts between agents.
 - **Configurable architectural principles.** Pattern evaluation loaded from JSON config — same schema-driven approach for any engagement.
 - **Evaluation from Day 1.** Extraction accuracy, classification accuracy, and completeness accuracy measured against ground truth.
@@ -42,7 +42,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# Edit .env with your Anthropic API key
+# Edit .env with your LLM provider config
 ```
 
 ### Run the evaluation pipeline
@@ -123,14 +123,13 @@ Add engagement-specific principles by editing the config file.
 ## Dependencies
 
 ```
-anthropic       # Claude API
+llm-adapter     # Provider-agnostic LLM client (Anthropic, OpenAI, Azure, Bedrock, local)
 pydantic        # Typed inter-agent state models
 openpyxl        # Excel workbook generation
 PyMuPDF         # PDF parsing
 python-docx     # DOCX parsing
 pandas          # Structured data handling
 tiktoken        # Token counting
-python-dotenv   # Environment config
 pytest          # Test harness
 ```
 
@@ -138,6 +137,7 @@ pytest          # Test harness
 
 | Repo | Demonstrates |
 |------|-------------|
+| [`llm-adapter`](https://github.com/Brinkv3/llm-adapter) | Provider-agnostic LLM abstraction — swap providers via `.env` |
 | [`rag-pipeline`](https://github.com/Brinkv3/rag-pipeline) | Retrieval, grounding, evaluation, governance, multi-agent orchestration |
 | [`doc-intelligence`](https://github.com/Brinkv3/doc-intelligence) | Classification, structured extraction, cross-document reasoning |
 | [`consulting-mcp-server`](https://github.com/Brinkv3/consulting-mcp-server) | Protocol interoperability — unified tool surface over MCP |

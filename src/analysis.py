@@ -8,7 +8,7 @@ from src.models import (
     Finding,
     Severity,
 )
-from src.utils import DEFAULT_MODEL, get_anthropic_client, load_principles
+from src.utils import get_llm_client, load_principles
 
 SYSTEM_PROMPT = """You are the Analysis Agent for a data audit workflow. Your job is to evaluate the answered interview questions against a set of architectural principles.
 
@@ -72,7 +72,7 @@ def analyze_against_principles(
     principles_path=None,
 ) -> tuple[list[Finding], AgentTrace]:
     start = time.time()
-    client = get_anthropic_client()
+    client = get_llm_client()
 
     principles = load_principles(principles_path)
 
@@ -101,23 +101,18 @@ def analyze_against_principles(
         f"for clear alignments or violations."
     )
 
-    response = client.messages.create(
-        model=DEFAULT_MODEL,
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        tools=[FINDINGS_TOOL],
-        tool_choice={"type": "tool", "name": "submit_findings"},
+    response = client.complete_with_tools(
         messages=[{"role": "user", "content": user_msg}],
+        tools=[FINDINGS_TOOL],
+        system=SYSTEM_PROMPT,
+        max_tokens=4096,
+        tool_choice={"type": "tool", "name": "submit_findings"},
     )
 
-    tool_input = None
-    for block in response.content:
-        if block.type == "tool_use" and block.name == "submit_findings":
-            tool_input = block.input
-            break
-
-    if not tool_input:
+    if not response.tool_calls:
         raise ValueError("Analysis agent did not return structured output")
+
+    tool_input = response.tool_calls[0].arguments
 
     findings = [
         Finding(

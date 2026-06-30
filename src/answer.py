@@ -12,7 +12,7 @@ from src.models import (
     SourceCitation,
     SourceType,
 )
-from src.utils import DEFAULT_MODEL, count_tokens, get_anthropic_client
+from src.utils import count_tokens, get_llm_client
 
 SYSTEM_PROMPT = """You are the Answer Agent for a data audit workflow. Your job is to answer interview questions as completely and accurately as possible by searching across ALL provided interview artifacts.
 
@@ -113,7 +113,7 @@ def synthesize_answers(
     inputs: InterviewInputs,
 ) -> tuple[list[AnsweredQuestion], AgentTrace]:
     start = time.time()
-    client = get_anthropic_client()
+    client = get_llm_client()
 
     source_context = _build_source_context(inputs)
     question_list = _build_question_list(framework)
@@ -131,13 +131,12 @@ def synthesize_answers(
     if len(framework.questions) > 15 or total_input_tokens > 100_000:
         return _synthesize_chunked(framework, inputs, client, start)
 
-    response = client.messages.create(
-        model=DEFAULT_MODEL,
-        max_tokens=16384,
-        system=SYSTEM_PROMPT,
-        tools=[ANSWER_TOOL],
-        tool_choice={"type": "tool", "name": "submit_answers"},
+    response = client.complete_with_tools(
         messages=[{"role": "user", "content": user_msg}],
+        tools=[ANSWER_TOOL],
+        system=SYSTEM_PROMPT,
+        max_tokens=16384,
+        tool_choice={"type": "tool", "name": "submit_answers"},
     )
 
     return _parse_response(response, framework, inputs, start, 1)
@@ -170,13 +169,12 @@ def _synthesize_chunked(
             f"Answer these questions. Search across ALL source documents."
         )
 
-        response = client.messages.create(
-            model=DEFAULT_MODEL,
-            max_tokens=8192,
-            system=SYSTEM_PROMPT,
-            tools=[ANSWER_TOOL],
-            tool_choice={"type": "tool", "name": "submit_answers"},
+        response = client.complete_with_tools(
             messages=[{"role": "user", "content": user_msg}],
+            tools=[ANSWER_TOOL],
+            system=SYSTEM_PROMPT,
+            max_tokens=8192,
+            tool_choice={"type": "tool", "name": "submit_answers"},
         )
 
         answered, _ = _parse_response(response, framework, inputs, start, 1)
@@ -208,19 +206,13 @@ def _parse_response(
     start: float,
     llm_calls: int,
 ) -> tuple[list[AnsweredQuestion], AgentTrace]:
-    tool_input = None
-    for block in response.content:
-        if block.type == "tool_use" and block.name == "submit_answers":
-            tool_input = block.input
-            break
-
-    if not tool_input:
-        block_types = [b.type for b in response.content]
-        stop = response.stop_reason
+    if not response.tool_calls:
         raise ValueError(
             f"Answer agent did not return structured output. "
-            f"Stop reason: {stop}, blocks: {block_types}"
+            f"Stop reason: {response.stop_reason}"
         )
+
+    tool_input = response.tool_calls[0].arguments
 
     def _safe_source_type(raw: str) -> SourceType:
         try:

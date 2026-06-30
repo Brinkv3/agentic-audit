@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIR = PROJECT_ROOT / "config"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
+from llm_adapter import create_client
 
 
 def load_principles(path: Path | None = None) -> dict:
@@ -50,15 +50,8 @@ def parse_file(filepath: str | Path) -> str:
     return filepath.read_text(encoding="utf-8")
 
 
-def get_anthropic_client():
-    from anthropic import Anthropic
-    from dotenv import load_dotenv
-
-    load_dotenv()
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY not set. Copy .env.example to .env and add your key.")
-    return Anthropic(api_key=api_key)
+def get_llm_client():
+    return create_client()
 
 
 def guess_source_type(filename: str) -> str:

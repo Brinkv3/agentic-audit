@@ -10,7 +10,7 @@ from src.models import (
     SourceCitation,
     SourceType,
 )
-from src.utils import DEFAULT_MODEL, get_anthropic_client
+from src.utils import get_llm_client
 
 SYSTEM_PROMPT = """You are the Validation Agent for a data audit workflow. Your job is to cross-check synthesized answers for quality and consistency.
 
@@ -66,7 +66,7 @@ def validate_answers(
     application_name: str,
 ) -> tuple[list[AnsweredQuestion], AgentTrace]:
     start = time.time()
-    client = get_anthropic_client()
+    client = get_llm_client()
 
     answers_text = "\n\n".join(
         f"[{a.question_id}] Q: {a.question_text}\n"
@@ -106,31 +106,28 @@ def validate_answers(
                 f"Cross-check all answers. Flag conflicts, adjust confidence and "
                 f"completeness where warranted, verify classifications."
             )
-            resp = client.messages.create(
-                model=DEFAULT_MODEL,
-                max_tokens=8192,
-                system=SYSTEM_PROMPT,
-                tools=[VALIDATION_TOOL],
-                tool_choice={"type": "tool", "name": "submit_validated_answers"},
+            resp = client.complete_with_tools(
                 messages=[{"role": "user", "content": chunk_msg}],
+                tools=[VALIDATION_TOOL],
+                system=SYSTEM_PROMPT,
+                max_tokens=8192,
+                tool_choice={"type": "tool", "name": "submit_validated_answers"},
             )
             total_tokens_used += resp.usage.input_tokens + resp.usage.output_tokens
-            for block in resp.content:
-                if block.type == "tool_use":
-                    adj_map = {v["question_id"]: v for v in block.input.get("validated_answers", [])}
-                    for a in chunk:
-                        adj = adj_map.get(a.question_id)
-                        if adj:
-                            all_validated.append(a.model_copy(update={
-                                "confidence": adj["confidence_adjusted"],
-                                "completeness": Completeness(adj["completeness_adjusted"]),
-                                "answer_type": AnswerType(adj["answer_type_adjusted"]),
-                                "conflicts": adj.get("conflicts_found") or a.conflicts,
-                                "synthesized_answer": adj.get("answer_revised") or a.synthesized_answer,
-                            }))
-                        else:
-                            all_validated.append(a)
-                    break
+            if resp.tool_calls:
+                adj_map = {v["question_id"]: v for v in resp.tool_calls[0].arguments.get("validated_answers", [])}
+                for a in chunk:
+                    adj = adj_map.get(a.question_id)
+                    if adj:
+                        all_validated.append(a.model_copy(update={
+                            "confidence": adj["confidence_adjusted"],
+                            "completeness": Completeness(adj["completeness_adjusted"]),
+                            "answer_type": AnswerType(adj["answer_type_adjusted"]),
+                            "conflicts": adj.get("conflicts_found") or a.conflicts,
+                            "synthesized_answer": adj.get("answer_revised") or a.synthesized_answer,
+                        }))
+                    else:
+                        all_validated.append(a)
             else:
                 all_validated.extend(chunk)
 
@@ -152,28 +149,21 @@ def validate_answers(
         )
         return all_validated, trace
 
-    response = client.messages.create(
-        model=DEFAULT_MODEL,
-        max_tokens=8192,
-        system=SYSTEM_PROMPT,
-        tools=[VALIDATION_TOOL],
-        tool_choice={"type": "tool", "name": "submit_validated_answers"},
+    response = client.complete_with_tools(
         messages=[{"role": "user", "content": user_msg}],
+        tools=[VALIDATION_TOOL],
+        system=SYSTEM_PROMPT,
+        max_tokens=8192,
+        tool_choice={"type": "tool", "name": "submit_validated_answers"},
     )
 
-    tool_input = None
-    for block in response.content:
-        if block.type == "tool_use" and block.name == "submit_validated_answers":
-            tool_input = block.input
-            break
-
-    if not tool_input:
-        stop = response.stop_reason
-        block_types = [b.type for b in response.content]
+    if not response.tool_calls:
         raise ValueError(
             f"Validation agent did not return structured output. "
-            f"Stop reason: {stop}, blocks: {block_types}"
+            f"Stop reason: {response.stop_reason}"
         )
+
+    tool_input = response.tool_calls[0].arguments
 
     answer_map = {a.question_id: a for a in answered_questions}
     adjustments = {v["question_id"]: v for v in tool_input["validated_answers"]}

@@ -8,9 +8,9 @@ Where this project should go when it's time to invest in it again.
 
 The pipeline works end-to-end: question framework loading (JSON/Excel), intake, answer synthesis with factual/anecdotal classification, principle-based analysis, validation, synthesis with AI observations, and Excel deliverable generation. Eval harness validates extraction accuracy (96.7%), completeness (100%), and classification (70%).
 
-**Practical gap:** Every LLM call hits the Anthropic API, which means client interview data leaves the local machine and burns API credits (~200K tokens per run with a 40-question framework across 2 applications). For day-to-day use on live engagements, the prompt-based approach via Claude Code (see `PROMPT_GUIDE.md`) is more practical — same model quality, uses the existing subscription, and keeps the human in the loop.
+**Practical gap:** ~200K tokens per run with a 40-question framework across 2 applications. For day-to-day use on live engagements, the prompt-based approach via Claude Code (see `PROMPT_GUIDE.md`) is more practical — same model quality, uses the existing subscription, and keeps the human in the loop.
 
-The pipeline's value is in the automation pattern, the evaluation framework, and as a portfolio demonstration. The prompt guide is the practitioner tool.
+**Provider flexibility:** The pipeline now uses [llm-adapter](https://github.com/Brinkv3/llm-adapter) — swap to Bedrock, Azure OpenAI, or a local model via `.env` with zero code changes. A client with an enterprise Bedrock agreement can drop in their credentials and run the full pipeline within their own AWS boundary.
 
 ---
 
@@ -18,7 +18,7 @@ The pipeline's value is in the automation pattern, the evaluation framework, and
 
 ### 1. Local/Private Model Backend
 
-**Problem:** Client data transits Anthropic's infrastructure.
+**Problem:** Client data transits the LLM provider's infrastructure.
 
 **Options (ranked by quality vs. privacy trade-off):**
 
@@ -29,7 +29,7 @@ The pipeline's value is in the automation pattern, the evaluation framework, and
 | Ollama + Llama 3.3 70B | Lower for classification | Fully local | Hardware only |
 | Ollama + Qwen 2.5 72B | Competitive for extraction | Fully local | Hardware only |
 
-**Recommendation:** Bedrock is the right move for real consulting use. One SDK change (`anthropic.AnthropicBedrock` instead of `anthropic.Anthropic`). Same prompts, same tool definitions, same output quality. Data stays in your AWS. The code change is ~10 lines in `utils.py`.
+**Recommendation:** Bedrock is the right move for real consulting use. With `llm-adapter`, this is now a `.env` change — set `LLM_PROVIDER=bedrock` and configure `AWS_REGION` / `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`. Same prompts, same tool definitions, same output quality. Data stays in your AWS. No code changes required.
 
 ### 2. Classification Calibration
 
@@ -82,7 +82,7 @@ The current design is sequential: intake → answer → analyze → validate →
 - Validation must come after answers (it reviews them).
 - Synthesis must come after all applications are processed (it needs the full picture).
 
-A natural refactor: use `asyncio` with `anthropic.AsyncAnthropic` for concurrent API calls within each phase. The orchestrator becomes an async coordinator. This cuts wall-clock time roughly in half for multi-application runs.
+A natural refactor: use `asyncio` for concurrent LLM calls within each phase. The orchestrator becomes an async coordinator. This cuts wall-clock time roughly in half for multi-application runs.
 
 ---
 

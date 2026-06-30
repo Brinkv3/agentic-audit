@@ -11,7 +11,7 @@ from src.models import (
     EngagementResult,
     QuestionFramework,
 )
-from src.utils import DEFAULT_MODEL, get_anthropic_client
+from src.utils import get_llm_client
 
 SUMMARY_SYSTEM_PROMPT = """You are the Synthesis Agent for a data audit workflow. Generate an executive summary of the engagement findings.
 
@@ -103,7 +103,7 @@ def synthesize_engagement(
     app_results: list[AppResult],
 ) -> tuple[EngagementResult, AgentTrace]:
     start = time.time()
-    client = get_anthropic_client()
+    client = get_llm_client()
     total_tokens = 0
 
     coverage = build_coverage_matrix(framework, app_results)
@@ -111,38 +111,27 @@ def synthesize_engagement(
     # --- Summary generation ---
     results_text = _format_results_for_summary(framework, app_results, coverage)
 
-    summary_response = client.messages.create(
-        model=DEFAULT_MODEL,
-        max_tokens=2048,
-        system=SUMMARY_SYSTEM_PROMPT,
-        tools=[SUMMARY_TOOL],
-        tool_choice={"type": "tool", "name": "submit_summary"},
+    summary_response = client.complete_with_tools(
         messages=[{"role": "user", "content": results_text}],
+        tools=[SUMMARY_TOOL],
+        system=SUMMARY_SYSTEM_PROMPT,
+        max_tokens=2048,
+        tool_choice={"type": "tool", "name": "submit_summary"},
     )
 
     summary = ""
-    for block in summary_response.content:
-        if block.type == "tool_use":
-            tool_data = block.input
-            if "summary" in tool_data:
-                summary = tool_data["summary"]
-            else:
-                summary = str(tool_data)
-            break
-        elif block.type == "text":
-            summary = block.text
+    if summary_response.tool_calls:
+        tool_data = summary_response.tool_calls[0].arguments
+        summary = tool_data.get("summary", str(tool_data))
+    elif summary_response.text:
+        summary = summary_response.text
 
     total_tokens += summary_response.usage.input_tokens + summary_response.usage.output_tokens
 
     # --- AI Observations pass ---
     all_answers_text = _format_all_answers(app_results)
 
-    obs_response = client.messages.create(
-        model=DEFAULT_MODEL,
-        max_tokens=4096,
-        system=OBSERVATIONS_SYSTEM_PROMPT,
-        tools=[OBSERVATIONS_TOOL],
-        tool_choice={"type": "tool", "name": "submit_observations"},
+    obs_response = client.complete_with_tools(
         messages=[
             {
                 "role": "user",
@@ -153,22 +142,24 @@ def synthesize_engagement(
                 ),
             }
         ],
+        tools=[OBSERVATIONS_TOOL],
+        system=OBSERVATIONS_SYSTEM_PROMPT,
+        max_tokens=4096,
+        tool_choice={"type": "tool", "name": "submit_observations"},
     )
 
     observations = []
-    for block in obs_response.content:
-        if block.type == "tool_use":
-            obs_list = block.input.get("observations", [])
-            for o in obs_list:
-                observations.append(
-                    AIObservation(
-                        observation=o.get("observation", ""),
-                        evidence=o.get("evidence", ""),
-                        source_interviews=o.get("source_interviews", []),
-                        suggested_followup=o.get("suggested_followup"),
-                    )
+    if obs_response.tool_calls:
+        obs_list = obs_response.tool_calls[0].arguments.get("observations", [])
+        for o in obs_list:
+            observations.append(
+                AIObservation(
+                    observation=o.get("observation", ""),
+                    evidence=o.get("evidence", ""),
+                    source_interviews=o.get("source_interviews", []),
+                    suggested_followup=o.get("suggested_followup"),
                 )
-            break
+            )
 
     total_tokens += obs_response.usage.input_tokens + obs_response.usage.output_tokens
 

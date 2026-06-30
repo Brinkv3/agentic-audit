@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from src.models import AgentTrace, Question, QuestionFramework
-from src.utils import DEFAULT_MODEL, count_tokens, get_anthropic_client, parse_file
+from src.utils import count_tokens, get_llm_client, parse_file
 
 SYSTEM_PROMPT = """You are an expert data audit consultant generating interview questions for a consulting engagement.
 
@@ -71,7 +71,7 @@ def generate_questions(
     engagement_name: str = "Untitled Engagement",
 ) -> tuple[QuestionFramework, AgentTrace]:
     start = time.time()
-    client = get_anthropic_client()
+    client = get_llm_client()
 
     doc_contents = []
     for doc_path in engagement_docs:
@@ -88,23 +88,18 @@ def generate_questions(
         f"interview questions.\n\n{combined}"
     )
 
-    response = client.messages.create(
-        model=DEFAULT_MODEL,
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        tools=[QUESTION_TOOL],
-        tool_choice={"type": "tool", "name": "submit_questions"},
+    response = client.complete_with_tools(
         messages=[{"role": "user", "content": user_msg}],
+        tools=[QUESTION_TOOL],
+        system=SYSTEM_PROMPT,
+        max_tokens=4096,
+        tool_choice={"type": "tool", "name": "submit_questions"},
     )
 
-    tool_input = None
-    for block in response.content:
-        if block.type == "tool_use" and block.name == "submit_questions":
-            tool_input = block.input
-            break
-
-    if not tool_input:
+    if not response.tool_calls:
         raise ValueError("Question generation agent did not return structured output")
+
+    tool_input = response.tool_calls[0].arguments
 
     questions = [
         Question(

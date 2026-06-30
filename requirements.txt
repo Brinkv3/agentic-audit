@@ -1,14 +1,11 @@
 # --- Core pipeline ---
-anthropic              # Claude API
+llm-adapter[anthropic] @ git+https://github.com/Brinkv3/llm-adapter.git  # Provider-agnostic LLM client
 pydantic               # Typed inter-agent state models
 openpyxl               # Excel workbook generation
 PyMuPDF                # PDF parsing (import as fitz)
 python-docx            # DOCX parsing
 pandas                 # Structured data handling
 tiktoken               # Token counting
-
-# --- Config / DX ---
-python-dotenv          # Load ANTHROPIC_API_KEY from .env
 
 # --- Dev / test ---
 pytest                 # Test harness
