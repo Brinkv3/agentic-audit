@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "description": "Architectural principles for data audit pattern evaluation",
+  "principles": [
+    {
+      "id": "lakehouse-source-of-truth",
+      "name": "Lakehouse as Source of Truth",
+      "description": "All applications should store and retrieve data from the lakehouse. The lakehouse is the canonical, governed data layer.",
+      "severity": "high",
+      "indicators": {
+        "positive": [
+          "reads from lakehouse",
+          "writes to lakehouse",
+          "lakehouse is system of record",
+          "governed data layer"
+        ],
+        "negative": [
+          "direct database-to-database replication",
+          "flat file exports between systems",
+          "shadow copies of data",
+          "local database as source of truth"
+        ]
+      }
+    },
+    {
+      "id": "no-app-to-app-dependencies",
+      "name": "No Application-to-Application Data Dependencies",
+      "description": "Applications should not depend directly on other applications for data. All data flows should go through the lakehouse or an integration layer.",
+      "severity": "high",
+      "indicators": {
+        "positive": [
+          "decoupled data access",
+          "integration layer",
+          "event-driven data flow"
+        ],
+        "negative": [
+          "direct API calls between applications for data",
+          "shared database between applications",
+          "point-to-point integrations",
+          "application reads another application's database"
+        ]
+      }
+    },
+    {
+      "id": "enterprise-saas-direct-api",
+      "name": "Enterprise SaaS via Direct API",
+      "description": "Enterprise SaaS platforms (Workday, Salesforce, ServiceNow, etc.) should be accessed via their native APIs unless there is a documented business case for routing through analytics/AI layers.",
+      "severity": "medium",
+      "indicators": {
+        "positive": [
+          "native API integration",
+          "vendor-supported connector",
+          "direct REST/SOAP calls"
+        ],
+        "negative": [
+          "screen scraping SaaS applications",
+          "manual data exports from SaaS",
+          "undocumented workarounds for API limitations"
+        ]
+      }
+    }
+  ]
+}

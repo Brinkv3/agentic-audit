@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environment
+.venv/
+venv/
+
+# Secrets / config
+.env
+.env.*
+!.env.example
+
+# Project context (personal, not for public repo)
+PROJECT_CONTEXT.md
+
+# Input documents (client-sensitive, never commit)
+input/*
+!input/.gitkeep
+
+# Generated output (rebuild from source)
+output/*
+!output/.gitkeep
+
+# OS
+.DS_Store

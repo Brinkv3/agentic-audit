@@ -1,0 +1,67 @@
+{
+  "engagement_name": "Acme Corp Data Audit",
+  "locked": true,
+  "source": "manual_upload",
+  "questions": [
+    {
+      "id": "Q-DATA-001",
+      "category": "Data Sources",
+      "text": "What are the primary data sources this application consumes?",
+      "context": "Understanding source systems helps map the data dependency graph"
+    },
+    {
+      "id": "Q-DATA-002",
+      "category": "Data Sources",
+      "text": "How is data ingested into this application (batch, real-time, API, manual upload)?",
+      "context": "Ingestion patterns reveal architecture maturity and potential bottlenecks"
+    },
+    {
+      "id": "Q-INT-001",
+      "category": "Integrations",
+      "text": "What other systems does this application send data to?",
+      "context": "Downstream dependencies affect change impact and risk"
+    },
+    {
+      "id": "Q-INT-002",
+      "category": "Integrations",
+      "text": "Are there any direct application-to-application data dependencies?",
+      "context": "Direct dependencies violate the lakehouse-as-hub principle"
+    },
+    {
+      "id": "Q-DQ-001",
+      "category": "Data Quality",
+      "text": "What data quality checks or validation rules are in place?",
+      "context": "Data quality controls indicate governance maturity"
+    },
+    {
+      "id": "Q-DQ-002",
+      "category": "Data Quality",
+      "text": "Who is responsible for data quality in this application?",
+      "context": "Ownership clarity is critical for governance"
+    },
+    {
+      "id": "Q-DEP-001",
+      "category": "Dependencies",
+      "text": "What would break if this application went down for 24 hours?",
+      "context": "Reveals critical dependencies and SLA exposure"
+    },
+    {
+      "id": "Q-PAIN-001",
+      "category": "Pain Points",
+      "text": "What are the biggest data-related pain points with this application?",
+      "context": "Pain points often reveal architectural gaps"
+    },
+    {
+      "id": "Q-FUTURE-001",
+      "category": "Future State",
+      "text": "Are there any planned changes to how this application handles data?",
+      "context": "Future state affects recommendations and sequencing"
+    },
+    {
+      "id": "Q-GOV-001",
+      "category": "Governance",
+      "text": "How is sensitive or PII data handled within this application?",
+      "context": "Compliance and data protection posture"
+    }
+  ]
+}

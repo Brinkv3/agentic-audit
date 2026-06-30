@@ -1,0 +1,113 @@
+{
+  "engagement_name": "Acme Corp Data Audit",
+  "applications": {
+    "Payroll System": {
+      "expected_answers": {
+        "Q-DATA-001": {
+          "key_facts": ["Workday (REST API, nightly batch)", "Kronos (flat file via SFTP)", "manual upload for bonuses"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DATA-002": {
+          "key_facts": ["Workday: REST API, nightly batch at 2 AM ET, delta pull", "Kronos: flat file CSV dropped to SFTP", "Bonuses: manual spreadsheet upload via admin screen"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-INT-001": {
+          "key_facts": ["SAP (direct JDBC write to staging tables for GL)", "Data lakehouse (summary feed, 6 months old)"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-INT-002": {
+          "key_facts": ["SAP direct JDBC write is an app-to-app dependency"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DQ-001": {
+          "key_facts": ["Workday: validation rules (e.g., cost center required)", "Kronos: checksum/row count validation", "headcount reconciliation after each payroll run"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DQ-002": {
+          "key_facts": ["Maria Chen owns data quality operationally", "David Park's team handles technical monitoring"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DEP-001": {
+          "key_facts": ["Pay run delayed (compliance issue if near pay date)", "GL feed to SAP delayed", "Finance would notice"],
+          "expected_type": "mixed",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-PAIN-001": {
+          "key_facts": ["Kronos flat file (no schema, 3 incidents this year)", "Monthly 2-day reconciliation with Workday"],
+          "expected_type": "mixed",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-FUTURE-001": {
+          "key_facts": ["SAP API migration planned Q1 next year", "Kronos replacement discussed but timeline soft", "Lakehouse feed replacing direct DB access"],
+          "expected_type": "mixed",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-GOV-001": {
+          "key_facts": ["SSNs encrypted at rest and masked in UI", "Salary restricted by role", "SOC 2 passed but SFTP file-at-rest encryption gap flagged"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        }
+      }
+    },
+    "CRM Platform": {
+      "expected_answers": {
+        "Q-DATA-001": {
+          "key_facts": ["Marketo (lead source, native connector)", "ZoomInfo (account enrichment, API)", "Manual sales rep entry (~40% of data)"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DATA-002": {
+          "key_facts": ["Marketo: native connector, near real-time (5 min delay)", "ZoomInfo: scheduled API, 2x/week", "Manual: direct entry by sales reps"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-INT-001": {
+          "key_facts": ["Data lakehouse via Fivetran (6-hour cadence)", "NetSuite via Workato (closed-won triggers invoicing)", "Support portal (real-time API)"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-INT-002": {
+          "key_facts": ["Support portal has real-time API dependency on Salesforce", "Marketo sync dependency (leads queue if Salesforce down)"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DQ-001": {
+          "key_facts": ["Required fields on leads and opportunities", "Duplicate detection rules (imperfect)", "Fivetran handles schema drift"],
+          "expected_type": "mixed",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DQ-002": {
+          "key_facts": ["Rachel Torres owns Salesforce config", "Sales ops owns pipeline data", "Marketing owns lead data", "Nobody owns enrichment data"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-DEP-001": {
+          "key_facts": ["Lead routing stops", "Reps can't see pipeline", "Support portal degrades", "Lakehouse data up to 30 hours stale", "NetSuite invoicing fails"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-PAIN-001": {
+          "key_facts": ["15% duplicate accounts", "ZoomInfo creates duplicates ~20% of time", "Fivetran silent schema failures (2-week detection delay)"],
+          "expected_type": "mixed",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-FUTURE-001": {
+          "key_facts": ["Evaluating Marketo to HubSpot migration", "Data quality layer between Salesforce and lakehouse (wish list)"],
+          "expected_type": "mixed",
+          "expected_completeness": "fully_answered"
+        },
+        "Q-GOV-001": {
+          "key_facts": ["Field-level security in Salesforce", "PII export restricted to admins", "No SSN/financial data in Salesforce", "Lakehouse: column-level access, PII hashed"],
+          "expected_type": "factual",
+          "expected_completeness": "fully_answered"
+        }
+      }
+    }
+  }
+}
