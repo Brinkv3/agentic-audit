@@ -2,6 +2,12 @@
 
 A multi-agent workflow system that automates the consulting data audit discovery process: generate interview questions from engagement documents, process interview artifacts, synthesize answers with factual/anecdotal classification, evaluate against architectural principles, and produce a client-ready Excel deliverable.
 
+## Architecture
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="Agentic Audit Pipeline Architecture" width="780" />
+</p>
+
 ## What It Does
 
 ```
