@@ -48,13 +48,17 @@
   <text class="box-label-dark" x="140" y="63">Engagement Docs</text>
   <text class="box-sub-dark" x="140" y="80">SOWs, project plans, scoping</text>
 
+  <rect class="box-white" x="310" y="45" width="200" height="50" />
+  <text class="box-label-dark" x="410" y="63">Question Framework</text>
+  <text class="box-sub-dark" x="410" y="80">User-uploaded Excel / JSON</text>
+
   <!-- Configurable principles (side input) -->
   <rect class="box-white" x="600" y="45" width="160" height="50" />
   <text class="box-label-dark" x="680" y="63">Principles</text>
   <text class="box-sub-dark" x="680" y="80">JSON config</text>
 
   <!-- ===== Phase A: Question Framework ===== -->
-  <rect class="section-bg" x="20" y="115" width="300" height="90" />
+  <rect class="section-bg" x="20" y="115" width="560" height="90" />
   <rect class="box-slate" x="30" y="120" width="60" height="20" rx="4" ry="4" />
   <text class="phase-tag" x="60" y="130">PHASE A</text>
 
@@ -64,9 +68,25 @@
   <text class="box-label" x="175" y="158">Question Generation Agent</text>
   <text class="box-sub" x="175" y="175">question_gen.py · LLM tool calling</text>
 
+  <!-- OR divider -->
+  <rect class="box-slate" x="325" y="152" width="30" height="20" rx="4" ry="4" />
+  <text class="phase-tag" x="340" y="162">OR</text>
+
+  <!-- User-uploaded path -->
+  <line class="arrow" x1="410" y1="95" x2="410" y2="140" />
+  <rect class="box-teal" x="370" y="140" width="190" height="50" />
+  <text class="box-label" x="465" y="158">Load Questions</text>
+  <text class="box-sub" x="465" y="175">Excel (.xlsx) or JSON upload</text>
+
+  <!-- Both paths merge to QuestionFramework -->
+  <line class="arrow" x1="175" y1="190" x2="175" y2="210" />
+  <line class="arrow" x1="175" y1="210" x2="290" y2="218" />
+  <line class="arrow" x1="465" y1="190" x2="465" y2="210" />
+  <line class="arrow" x1="465" y1="210" x2="355" y2="218" />
+
   <!-- Output: QuestionFramework -->
-  <line class="arrow" x1="175" y1="190" x2="175" y2="225" />
-  <text class="data-label" x="260" y="215">QuestionFramework (locked)</text>
+  <rect class="box-navy" x="240" y="208" width="200" height="24" rx="6" ry="6" />
+  <text class="box-label" x="340" y="220" style="font-size: 11px;">QuestionFramework (locked)</text>
 
   <!-- ===== Phase B: Human — Interviews & Deliberation ===== -->
   <rect class="human-bg" x="20" y="225" width="740" height="145" />
